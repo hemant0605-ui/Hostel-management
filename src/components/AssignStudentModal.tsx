@@ -23,7 +23,8 @@ const AssignStudentModal: React.FC<AssignStudentModalProps> = ({ roomId, onClose
   const filteredStudents = useMemo(() =>
     unassignedStudents.filter(student =>
       `${student.firstName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.rollNumber.toLowerCase().includes(searchTerm.toLowerCase())
+      // FIX: Handle case where rollNumber might be undefined
+      (student.rollNumber || "").toLowerCase().includes(searchTerm.toLowerCase())
     ),
     [unassignedStudents, searchTerm]
   );
@@ -91,10 +92,10 @@ const AssignStudentModal: React.FC<AssignStudentModalProps> = ({ roomId, onClose
                   }`}
                 >
                   <div className="flex items-center space-x-3 mb-2">
-                    <img src={student.photoUrl} alt="" className="w-10 h-10 rounded-full" />
+                    <img src={student.photoUrl || "https://via.placeholder.com/40"} alt="" className="w-10 h-10 rounded-full" />
                     <div>
                       <p className="font-bold text-gray-800">{student.firstName} {student.lastName}</p>
-                      <p className="text-xs text-gray-500">{student.rollNumber}</p>
+                      <p className="text-xs text-gray-500">{student.rollNumber || student.SID}</p>
                     </div>
                   </div>
                 </motion.div>

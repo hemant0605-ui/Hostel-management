@@ -1,166 +1,148 @@
-import React, { useState } from 'react';
-import { Download, Search, Building2 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import { Search, Download, Printer, UserPlus, IdCard } from "lucide-react";
+import { useApp } from "../context/AppContext";
+import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const IDCards: React.FC = () => {
   const { students } = useApp();
-  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredStudents = students.filter(student =>
+  const filteredStudents = students.filter((student) =>
     `${student.firstName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.rollNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    (student.SID || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handlePrint = (studentId: string) => {
-    const printContent = document.getElementById(`id-card-${studentId}`);
-    if (!printContent) return;
-
-    const tailwindLink = Array.from(document.head.getElementsByTagName('link')).find(
-      (link) => link.rel === 'stylesheet'
-    );
-
-    const printWindow = window.open('', '', 'width=800,height=600');
-    if (!printWindow) return;
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Student ID Card</title>
-          ${tailwindLink ? tailwindLink.outerHTML : ''}
-          <style>
-            body { 
-              display: flex; 
-              justify-content: center; 
-              align-items: center; 
-              height: 100vh; 
-              background-color: #f0f0f0;
-              -webkit-print-color-adjust: exact; 
-              print-color-adjust: exact;
-            }
-            @media print {
-              body { background-color: #fff; display: block; }
-              .id-card-container { box-shadow: none !important; margin: 0; page-break-after: always; }
-            }
-          </style>
-        </head>
-        <body>
-          ${printContent.outerHTML}
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 500);
+  const handlePrint = () => {
+    toast.info("Preparing ID Cards for printing...");
+    setTimeout(() => window.print(), 1000);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">ID Cards</h1>
-          <p className="text-gray-600">Generate and print student ID cards</p>
+    <div className="min-h-screen bg-[#F5F9FA] p-6 space-y-8">
+      
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-end gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-[#354D62]">Student ID Cards</h1>
+          <p className="text-[#59748C] mt-1">
+            Generated <span className="font-bold text-[#354D62]">{filteredStudents.length}</span> digital IDs.
+          </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by name or roll number..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
+        <div className="flex gap-3 w-full md:w-auto">
+            <div className="relative flex-grow md:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#718CA1]" />
+                <input 
+                    type="text" 
+                    placeholder="Search by Name or SID..." 
+                    value={searchTerm} 
+                    onChange={e => setSearchTerm(e.target.value)} 
+                    className="w-full pl-10 pr-4 py-2.5 border border-[#718CA1]/30 rounded-xl text-sm text-[#354D62] outline-none focus:ring-2 focus:ring-[#354D62] bg-white shadow-sm" 
+                />
+            </div>
+            <button 
+              onClick={handlePrint} 
+              className="bg-white border border-[#718CA1]/30 text-[#354D62] px-4 py-2.5 rounded-xl shadow-sm hover:bg-[#D7F2F7] transition flex items-center gap-2 font-bold text-sm"
+            >
+                <Printer className="w-4 h-4" /> Print All
+            </button>
         </div>
+      </div>
 
+      {/* Empty State */}
+      {filteredStudents.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-[#718CA1]">
+           <div className="bg-[#D7F2F7] p-4 rounded-full mb-4">
+             <IdCard className="w-12 h-12 text-[#354D62]" />
+           </div>
+           <h3 className="text-lg font-bold text-[#354D62]">No Students Found</h3>
+           <p className="mb-6">Add students to the directory to generate their ID cards.</p>
+           <button 
+             onClick={() => navigate('/admin/students/create')}
+             className="px-6 py-2.5 bg-[#354D62] text-white rounded-xl font-bold shadow-md hover:bg-[#59748C] transition flex items-center gap-2"
+           >
+             <UserPlus className="w-4 h-4" /> Add Student
+           </button>
+        </div>
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {filteredStudents.map((student, index) => {
-            const admissionDate = new Date(student.admissionDate);
-            const expiryDate = new Date(new Date(student.admissionDate).setFullYear(admissionDate.getFullYear() + 4)).toLocaleDateString('en-GB');
-            const joinDate = new Date(student.admissionDate).toLocaleDateString('en-GB');
+            const validDate = student.admissionDate ? new Date(student.admissionDate) : new Date();
+            const expiryDate = new Date(validDate.setFullYear(validDate.getFullYear() + 4)).toLocaleDateString("en-GB");
 
             return (
-              <motion.div
-                key={student.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="relative group"
+              <motion.div 
+                  key={student.id} 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: index * 0.05 }}
               >
-                <div id={`id-card-${student.id}`} className="w-[300px] h-[475px] relative font-sans rounded-2xl overflow-hidden shadow-xl bg-white id-card-container">
-                  {/* Background layers */}
-                  <div className="absolute inset-0">
-                    <div className="absolute bottom-0 left-0 w-full h-[55%] bg-[#ffc107]" />
-                    <div className="absolute w-[200%] h-64 bg-[#003c4c] transform -rotate-[30deg] top-[15%] -left-[50%]" />
-                    <div className="absolute top-0 left-0 w-full h-[45%] bg-white" />
-                  </div>
+                
+                {/* CARD DESIGN */}
+                <div className="w-full aspect-[3/4.9] bg-white rounded-3xl shadow-xl overflow-hidden relative group hover:-translate-y-2 transition-all duration-500 border border-[#718CA1]/10">
+                  
+                  {/* Background Pattern */}
+                  <div className="absolute inset-0 h-[50%] bg-gradient-to-br from-[#354D62] to-[#59748C] rounded-b-[3rem] z-0"></div>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#59748C] rounded-bl-[5rem] opacity-50 z-0"></div>
+                  
+                  <div className="absolute inset-0 p-6 z-10 flex flex-col items-center text-center">
+                    
+                    <h3 className="text-[#D7F2F7] font-bold text-[10px] tracking-[0.2em] mb-5 uppercase opacity-90">Hostel Pro Univ.</h3>
 
-                  {/* Content Layer */}
-                  <div className="absolute inset-0 z-10 flex flex-col">
-                    <div className="relative flex-shrink-0 h-[45%]">
-                      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-5 bg-gray-200 rounded-full" />
-                      <img
-                        src={student.photoUrl}
-                        alt={`${student.firstName} ${student.lastName}`}
-                        className="absolute top-12 left-6 w-32 h-32 object-cover rounded-md border-4 border-white shadow-lg"
-                      />
-                      <div className="absolute bottom-4 right-6 text-[#003c4c]">
-                        <Building2 className="w-8 h-8" />
+                    <div className="w-24 h-24 rounded-full border-4 border-white/20 p-1 shadow-lg backdrop-blur-sm">
+                      <div className="w-full h-full rounded-full bg-white overflow-hidden border-2 border-white">
+                         <img 
+                           src={student.photoUrl || "https://via.placeholder.com/150"} 
+                           alt="photo" 
+                           className="w-full h-full object-cover" 
+                         />
                       </div>
                     </div>
-                    <div className="flex-grow bg-[#ffc107] px-6 pb-4 flex flex-col justify-end">
-                      <div className="space-y-1.5 text-sm text-[#003c4c]">
-                        <div className="flex items-baseline">
-                          <span className="w-24 font-medium">Id No:</span>
-                          <span className="font-bold">{student.rollNumber}</span>
-                        </div>
-                        <div className="flex items-baseline">
-                          <span className="w-24 font-medium">Join Date:</span>
-                          <span className="font-bold">{joinDate}</span>
-                        </div>
-                        <div className="flex items-baseline">
-                          <span className="w-24 font-medium">Expiry Date:</span>
-                          <span className="font-bold">{expiryDate}</span>
-                        </div>
-                        <div className="flex items-baseline">
-                          <span className="w-24 font-medium">Email:</span>
-                          <span className="font-bold truncate">{student.email}</span>
-                        </div>
-                        <div className="flex items-baseline">
-                          <span className="w-24 font-medium">Blood:</span>
-                          <span className="font-bold">{student.bloodGroup || 'N/A'}</span>
-                        </div>
+
+                    <div className="mt-3">
+                      <h2 className="text-white font-bold text-lg tracking-tight leading-tight line-clamp-1">
+                        {student.firstName} {student.lastName}
+                      </h2>
+                      <p className="text-[#D7F2F7] text-xs font-medium mt-0.5">
+                        {student.course} • {student.year}
+                      </p>
+                    </div>
+
+                    <div className="mt-auto w-full bg-[#F5F9FA] rounded-xl shadow-inner p-4 space-y-2 text-left border border-[#E2E8F0]">
+                      <div className="flex justify-between text-xs border-b border-[#718CA1]/10 pb-1.5">
+                        <span className="text-[#718CA1] font-semibold">SID</span>
+                        <span className="text-[#354D62] font-bold font-mono">{student.SID}</span>
                       </div>
-                      <div className="mt-4 pt-2 border-t-2 border-[#003c4c]">
-                        <p className="text-center text-xs font-bold text-[#003c4c]">Hostel Management System</p>
+                      <div className="flex justify-between text-xs border-b border-[#718CA1]/10 pb-1.5">
+                        <span className="text-[#718CA1] font-semibold">DOB</span>
+                        <span className="text-[#354D62] font-bold">{student.dateOfBirth || 'N/A'}</span>
+                      </div>
+                      {/* 👇 NEW ADDRESS FIELD */}
+                      <div className="flex justify-between text-xs border-b border-[#718CA1]/10 pb-1.5">
+                         <span className="text-[#718CA1] font-semibold">City</span>
+                         <span className="text-[#354D62] font-bold truncate max-w-[100px]">{student.address || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between text-xs pt-0.5">
+                        <span className="text-[#718CA1] font-semibold">Valid Thru</span>
+                        <span className="text-rose-500 font-bold">{expiryDate}</span>
                       </div>
                     </div>
+
                   </div>
                 </div>
-
-                <button
-                  onClick={() => handlePrint(student.id)}
-                  className="absolute top-3 right-3 bg-white text-indigo-600 p-3 rounded-full shadow-lg hover:bg-gray-100 hover:scale-110 transition-all opacity-0 group-hover:opacity-100"
-                  aria-label="Download or Print ID Card"
-                >
-                  <Download className="h-5 w-5" />
+                
+                <button className="w-full mt-4 bg-[#354D62] text-white py-2.5 rounded-xl text-sm font-bold hover:bg-[#59748C] transition flex items-center justify-center gap-2 shadow-md active:scale-95">
+                   <Download className="w-4 h-4" /> Download Card
                 </button>
+
               </motion.div>
-            )
+            );
           })}
         </div>
-
-        {filteredStudents.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No students found</p>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };

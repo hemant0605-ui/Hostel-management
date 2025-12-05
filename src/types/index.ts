@@ -1,5 +1,8 @@
+// src/types.ts
 export interface Student {
   id: string;
+  SID?: string;              // student code / login id
+  password?: string;        // student password (stored locally for demo)
   firstName: string;
   lastName: string;
   email: string;
@@ -7,11 +10,9 @@ export interface Student {
   dateOfBirth: string;
   gender: 'Male' | 'Female' | 'Other';
   address: string;
-  emergencyContact: string;
-  emergencyPhone: string;
   course: string;
   year: string;
-  rollNumber: string;
+  rollNumber?: string;
   roomId?: string;
   admissionDate: string;
   photoUrl?: string;
@@ -35,5 +36,3 @@ export interface Admin {
   password: string;
   name: string;
 }
-
-

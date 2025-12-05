@@ -1,56 +1,74 @@
-import { Room, Student } from "../types";
+import { Room, Student } from '../types';
+import { faker } from '@faker-js/faker';
 
-export function generateMockData() {
-  // ---------------------------
-  // GENERATE 200 ROOMS
-  // ---------------------------
-  const roomTypes: Room["type"][] = ["Single", "Double", "Triple", "Quad"];
-  const statuses: Room["status"][] = ["Available", "Occupied", "Full", "Maintenance"];
-  const amenityList = ["WiFi", "Fan", "Table", "Chair", "Light", "Charging Point"];
+export const generateMockData = (): { students: Student[]; rooms: Room[] } => {
+  const rooms: Room[] = [];
+  const students: Student[] = [];
 
-  const rooms: Room[] = Array.from({ length: 200 }, (_, i) => {
-    const floor = Math.floor(i / 20) + 1;  // 20 rooms per floor
-    const type = roomTypes[i % 4];
-    const capacity =
-      type === "Single" ? 1 :
-      type === "Double" ? 2 :
-      type === "Triple" ? 3 : 4;
+  // ---------------------------------------------------------
+  // 1. GENERATE 200 ROOMS (Sequential 1 to 200)
+  //    10 Floors with 20 Rooms per floor
+  // ---------------------------------------------------------
+  let roomCounter = 1;
 
-    return {
-      id: String(i + 1),
-      roomNumber: String(i + 1),
-      floor: floor,
-      capacity: capacity,
-      occupiedBeds: 0,
-      type: type,
-      status: "Available",
-      students: [],
-      amenities: amenityList.slice(0, Math.floor(Math.random() * amenityList.length) + 1),
-    };
-  });
+  for (let floor = 1; floor <= 10; floor++) {
+    // 20 Rooms per floor
+    for (let r = 1; r <= 20; r++) {
+      const roomNum = roomCounter.toString(); // "1", "2", ... "200"
+      
+      // Randomize capacity
+      let capacity = 2;
+      if (roomCounter % 5 === 0) capacity = 3; // Every 5th room is Triple
+      if (roomCounter % 8 === 0) capacity = 1; // Every 8th room is Single
 
-  // ---------------------------
-  // GENERATE 30 STUDENTS
-  // ---------------------------
-  const students: Student[] = Array.from({ length: 30 }, (_, i) => ({
-    id: String(i + 1),
-    firstName: "Student",
-    lastName: String(i + 1),
-    email: `student${i + 1}@gmail.com`,
-    phone: "9876543210",
-    dateOfBirth: "2004-01-01",
-    gender: "Male",
-    address: "Hostel Road, City",
-    emergencyContact: "Parent",
-    emergencyPhone: "9876543210",
-    course: ["B.Tech", "B.Sc", "MBA", "M.Tech"][i % 4],
-    year: String((i % 4) + 1),
-    rollNumber: `RN${1000 + i}`,
-    roomId: undefined,
-    admissionDate: "2023-01-01",
-    photoUrl: "",
-    bloodGroup: ["A+", "B+", "O+", "AB+"][i % 4],
-  }));
+      const type = capacity === 1 ? 'Single' : (capacity === 2 ? 'Double' : 'Triple');
+
+      rooms.push({
+        id: `room-${roomCounter}`,
+        roomNumber: roomNum,    // Shows "1", "2", "199", "200"
+        floor: floor,           // Floor 1 to 10
+        capacity: capacity,
+        occupiedBeds: 0,
+        type: type as 'Single' | 'Double' | 'Triple',
+        status: 'Available',
+        students: [],
+        amenities: ['WiFi', 'AC', 'Study Table', 'Cupboard']
+      });
+
+      roomCounter++;
+    }
+  }
+
+  // ---------------------------------------------------------
+  // 2. GENERATE 50 DUMMY STUDENTS
+  // ---------------------------------------------------------
+  for (let i = 0; i < 50; i++) {
+    const gender = i % 2 === 0 ? 'Male' : 'Female';
+    const firstName = faker.person.firstName(gender === 'Male' ? 'male' : 'female');
+    const lastName = faker.person.lastName();
+
+    students.push({
+      id: `student-${i + 1}`,
+      SID: `STU${2024000 + i}`,
+      password: 'password123',
+      firstName: firstName,
+      lastName: lastName,
+      email: faker.internet.email({ firstName, lastName }),
+      phone: faker.phone.number(),
+      dateOfBirth: faker.date.birthdate({ min: 18, max: 25, mode: 'age' }).toISOString().split('T')[0],
+      gender: gender,
+      address: faker.location.streetAddress(),
+      course: 'B.Tech',
+      year: ['1st Year', '2nd Year', '3rd Year', '4th Year'][Math.floor(Math.random() * 4)],
+      rollNumber: `RN-${100 + i}`,
+      admissionDate: new Date().toISOString(),
+      photoUrl: gender === 'Male' 
+        ? `https://randomuser.me/api/portraits/men/${i % 99}.jpg`
+        : `https://randomuser.me/api/portraits/women/${i % 99}.jpg`,
+      bloodGroup: ['A+', 'B+', 'O+', 'AB+'][Math.floor(Math.random() * 4)],
+      roomId: undefined 
+    });
+  }
 
   return { students, rooms };
-}
+};

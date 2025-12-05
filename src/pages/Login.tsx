@@ -107,19 +107,6 @@ const Login: React.FC = () => {
               Password: <span className="font-mono font-bold">admin123</span>
             </p>
           </div>
-
-          {/* 👇 Switch Login Button */}
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              Are you a Student?{" "}
-              <button
-                onClick={() => navigate("/student/login")}
-                className="text-indigo-600 font-semibold hover:underline"
-              >
-                Student Login
-              </button>
-            </p>
-          </div>
         </div>
       </motion.div>
     </div>
